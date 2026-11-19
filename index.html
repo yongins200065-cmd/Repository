@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤 점심 메뉴 추천기</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            font-family: Arial, "Malgun Gothic", sans-serif;
+            background: linear-gradient(135deg, #fff1df, #ffe0e7);
+            color: #342b2b;
+        }
+
+        .app {
+            width: min(100%, 520px);
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 14px 40px rgba(100, 55, 55, .13);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 30px;
+        }
+
+        .subtitle {
+            color: #777;
+            margin-bottom: 26px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin: 22px 0 12px;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            border: none;
+            border-radius: 13px;
+            padding: 14px 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .category {
+            background: #fff0e8;
+            color: #744735;
+        }
+
+        .category.active {
+            background: #ff875f;
+            color: white;
+        }
+
+        .all {
+            grid-column: 1 / -1;
+            background: #f0eaff;
+            color: #59418d;
+        }
+
+        .recommend {
+            width: 100%;
+            margin-top: 20px;
+            background: #ff704f;
+            color: white;
+            font-size: 18px;
+            padding: 16px;
+        }
+
+        .result {
+            margin-top: 22px;
+            padding: 24px 16px;
+            min-height: 142px;
+            background: #fff8f3;
+            border: 1px dashed #ffc2a8;
+            border-radius: 17px;
+        }
+
+        .result-label {
+            color: #987568;
+            font-size: 14px;
+        }
+
+        #menuName {
+            font-size: 29px;
+            font-weight: 800;
+            margin: 10px 0;
+            color: #d9573c;
+        }
+
+        #message {
+            color: #777;
+            margin: 0;
+        }
+
+        .note {
+            margin-top: 18px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        @media (max-width: 420px) {
+            .app {
+                padding: 24px 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="app">
+
+        <h1>🍽️ 랜덤 점심 메뉴 추천기</h1>
+
+        <p class="subtitle">
+            오늘 점심은 무엇을 먹을까요?
+        </p>
+
+        <p class="section-title">
+            음식 종류를 선택하세요
+        </p>
+
+        <!-- 음식 종류 선택 버튼 -->
+        <div class="categories">
+
+            <button class="category active"
+                data-category="한식">
+                🍽️ 한식
+            </button>
+
+            <button class="category"
+                data-category="중식">
+                🍽️ 중식
+            </button>
+
+            <button class="category"
+                data-category="일식">
+                🍽️ 일식
+            </button>
+
+            <button class="category"
+                data-category="양식">
+                🍽️ 양식
+            </button>
+
+            <button class="all"
+                data-category="전체">
+                🎲 전체 메뉴
+            </button>
+
+        </div>
+
+        <!-- 메뉴 추천 버튼 -->
+        <button class="recommend" id="recommendButton">
+            랜덤 메뉴 추천받기
+        </button>
+
+        <!-- 추천 결과 표시 -->
+        <section class="result" aria-live="polite">
+
+            <span class="result-label">
+                오늘의 추천 메뉴
+            </span>
+
+            <div id="menuName">
+                메뉴를 선택해 주세요!
+            </div>
+
+            <p id="message">
+                버튼을 누르면 점심 메뉴를 추천해 드립니다.
+            </p>
+
+        </section>
+
+        <p class="note">
+            마음에 드는 메뉴가 나올 때까지 다시 추천받아 보세요!
+        </p>
+
+    </main>
+
+    <script>
+
+        // 1. 메뉴 리스트
+        const menu = {
+
+            "한식": [
+                "김치찌개",
+                "제육볶음",
+                "비빔밥",
+                "불고기",
+                "된장찌개"
+            ],
+
+            "중식": [
+                "짜장면",
+                "짬뽕",
+                "탕수육",
+                "마파두부",
+                "볶음밥"
+            ],
+
+            "일식": [
+                "돈까스",
+                "초밥",
+                "라멘",
+                "우동",
+                "규동"
+            ],
+
+            "양식": [
+                "파스타",
+                "피자",
+                "햄버거",
+                "스테이크",
+                "리조또"
+            ]
+
+        };
+
+        // 2. 선택된 음식 종류
+        let selectedCategory = "한식";
+
+        const categoryButtons =
+            document.querySelectorAll("[data-category]");
+
+        const menuName =
+            document.getElementById("menuName");
+
+        const message =
+            document.getElementById("message");
+
+
+        // 3. 음식 종류 선택 기능
+        categoryButtons.forEach(button => {
+
+            button.addEventListener("click", () => {
+
+                selectedCategory = button.dataset.category;
+
+                categoryButtons.forEach(item => {
+                    item.classList.remove("active");
+                });
+
+                button.classList.add("active");
+
+                menuName.textContent = "메뉴를 선택해 주세요!";
+
+                if (selectedCategory === "전체") {
+
+                    message.textContent =
+                        "모든 종류의 메뉴 중에서 추천합니다.";
+
+                } else {
+
+                    message.textContent =
+                        selectedCategory + " 메뉴 중에서 추천합니다.";
+
+                }
+
+            });
+
+        });
+
+
+        // 4. 랜덤 메뉴 추천 함수
+        function recommendMenu() {
+
+            let candidates;
+
+            if (selectedCategory === "전체") {
+
+                candidates = Object.values(menu).flat();
+
+            } else {
+
+                candidates = menu[selectedCategory];
+
+            }
+
+            // 랜덤 메뉴 선택
+            const selectedMenu =
+                candidates[
+                    Math.floor(Math.random() * candidates.length)
+                ];
+
+            // 추천 결과 출력
+            menuName.textContent =
+                "★ " + selectedMenu + " ★";
+
+            message.textContent =
+                "맛있는 점심 식사 하세요!";
+
+        }
+
+
+        // 5. 추천 버튼 이벤트
+        document.getElementById("recommendButton")
+            .addEventListener("click", recommendMenu);
+
+    </script>
+
+</body>
+</html>
